@@ -1,0 +1,17 @@
+venv/
+__pycache__/
+*.py[cod]
+.env
+.vscode/
+.ipynb_checkpoints/
+*.log
+.DS_Store
+.cache/
+.pytest_cache/
+*.tmp
+
+# Large data and model artifacts
+datasets/linkedin_dataset/
+datasets/processed/master_jobs.csv
+models/job_embeddings.pkldatasets/processed/processed_jobs.csv
+datasets/processed/processed_jobs.csv

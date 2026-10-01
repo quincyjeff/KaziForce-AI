@@ -1,1 +1,36 @@
+# ==========================
+# Python
+# ==========================
+__pycache__/
+*.py[cod]
 
+# Virtual Environment
+venv/
+
+# Environment Variables
+.env
+
+# VS Code
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# Hugging Face Cache
+.cache/
+
+# Model Cache
+models/*.bin
+models/*.safetensors
+
+# Python cache
+.pytest_cache/
+
+# Temporary files
+*.tmp

@@ -15,3 +15,4 @@ datasets/linkedin_dataset/
 datasets/processed/master_jobs.csv
 datasets/processed/processed_jobs.csv
 models/job_embeddings.pkl
+node_modules/

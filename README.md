@@ -177,6 +177,14 @@ POST /api/jobs
 
 A candidate with a Java backend resume receives: `New job: Senior Java Developer at Fintech Ltd (83.3% match)`, and the employer receives: `1 strong candidate for your Senior Java Developer role (top match: 83.3%)`.
 
+## Run the demo
+
+With the API and the matching service running, run this from the project root to see the whole flow on an empty database:
+
+    powershell -ExecutionPolicy Bypass -File .\demo.ps1
+
+It registers an employer and three candidates, uploads their resumes, posts a job, and prints the notifications, match rankings, and the mark-as-read step.
+
 ## Roadmap
 
 - Email delivery of notifications

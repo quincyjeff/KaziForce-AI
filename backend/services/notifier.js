@@ -3,10 +3,14 @@ const { jobText, resumeText, rank } = require('./matcher');
 
 const THRESHOLD = parseFloat(process.env.MATCH_THRESHOLD) || 60;
 
-async function notifyCandidates(job) {
+function toPercent(score) {
+  return Math.round(score * 1000) / 10;
+}
+
+async function notifyMatches(job) {
   const [resumes] = await db.query('SELECT * FROM resumes');
   if (resumes.length === 0) {
-    return 0;
+    return { candidates: 0, employer: 0 };
   }
 
   const matches = await rank(
@@ -19,7 +23,7 @@ async function notifyCandidates(job) {
   const bestPerCandidate = new Map();
 
   for (const match of matches) {
-    const percent = Math.round(match.score * 1000) / 10;
+    const percent = toPercent(match.score);
     if (percent < THRESHOLD) {
       continue;
     }
@@ -29,26 +33,39 @@ async function notifyCandidates(job) {
     }
   }
 
-  const rows = [];
-  for (const { resume, percent } of bestPerCandidate.values()) {
-    const company = job.company_name ? ` at ${job.company_name}` : '';
-    rows.push([
-      resume.user_id,
+  const strongMatches = [...bestPerCandidate.values()];
+  if (strongMatches.length === 0) {
+    return { candidates: 0, employer: 0 };
+  }
+
+  const company = job.company_name ? ` at ${job.company_name}` : '';
+  const candidateRows = strongMatches.map(({ resume, percent }) => [
+    resume.user_id,
+    job.job_id,
+    resume.resume_id,
+    percent,
+    `New job: ${job.job_title}${company} (${percent}% match)`
+  ]);
+
+  await db.query(
+    'INSERT INTO notifications (user_id, job_id, resume_id, match_score, message) VALUES ?',
+    [candidateRows]
+  );
+
+  const top = strongMatches[0];
+  const noun = strongMatches.length === 1 ? 'candidate' : 'candidates';
+  await db.query(
+    'INSERT INTO notifications (user_id, job_id, resume_id, match_score, message) VALUES (?, ?, ?, ?, ?)',
+    [
+      job.employer_id,
       job.job_id,
-      resume.resume_id,
-      percent,
-      `New job: ${job.job_title}${company} (${percent}% match)`
-    ]);
-  }
+      top.resume.resume_id,
+      top.percent,
+      `${strongMatches.length} strong ${noun} for your ${job.job_title} role (top match: ${top.percent}%)`
+    ]
+  );
 
-  if (rows.length > 0) {
-    await db.query(
-      'INSERT INTO notifications (user_id, job_id, resume_id, match_score, message) VALUES ?',
-      [rows]
-    );
-  }
-
-  return rows.length;
+  return { candidates: strongMatches.length, employer: 1 };
 }
 
-module.exports = { notifyCandidates };
+module.exports = { notifyMatches };

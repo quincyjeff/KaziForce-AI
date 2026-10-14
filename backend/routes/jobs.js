@@ -1,6 +1,6 @@
 const express = require('express');
 const db = require('../db');
-const { notifyCandidates } = require('../services/notifier');
+const { notifyMatches } = require('../services/notifier');
 
 const router = express.Router();
 
@@ -29,14 +29,19 @@ router.post('/', async (req, res) => {
         experience_level || null, work_type || null, skills || null, job_description
       ]
     );
-        const job = { job_id: result.insertId, job_title, company_name, skills, job_description };
-    let notified = 0;
+            const job = { job_id: result.insertId, employer_id, job_title, company_name, skills, job_description };
+    let notified = { candidates: 0, employer: 0 };
     try {
-      notified = await notifyCandidates(job);
+      notified = await notifyMatches(job);
     } catch (notifyError) {
       console.error('Notification step failed:', notifyError.message);
     }
-    res.status(201).json({ job_id: result.insertId, job_title, candidates_notified: notified });
+    res.status(201).json({
+      job_id: result.insertId,
+      job_title,
+      candidates_notified: notified.candidates,
+      employer_notified: notified.employer
+    });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }

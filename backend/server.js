@@ -6,6 +6,7 @@ const usersRoutes = require('./routes/users');
 const jobsRoutes = require('./routes/jobs');
 const resumesRoutes = require('./routes/resumes');
 const matchRoutes = require('./routes/match');
+const notificationsRoutes = require('./routes/notifications');
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/resumes', resumesRoutes);
 app.use('/api/match', matchRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`KaziForce API running on port ${port}`));

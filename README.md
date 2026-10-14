@@ -14,6 +14,7 @@ An AI-powered intelligent notification system for workforce recruitment. KaziFor
 2. The text is converted into a 384-dimension vector using the `all-MiniLM-L6-v2` Sentence Transformers model.
 3. Vectors are normalized, so cosine similarity is a simple dot product. A score of 0.83 means an 83% match.
 4. When an employer posts a job, it is scored against every resume. Candidates scoring at or above the threshold (default 60%) each receive one notification, using their best-matching resume. The employer receives one summary notification.
+5. Each notification is also sent by email when Gmail credentials are configured. If they aren't, notifications still appear in the app.
 
 ## Architecture
 
@@ -135,6 +136,8 @@ Set in `backend/.env`:
 | `PORT` | API port | `3000` |
 | `MATCH_THRESHOLD` | Minimum match percentage to notify (optional) | `60` |
 | `MATCHER_URL` | Matching service address (optional) | `http://localhost:8000` |
+| `EMAIL_USER` | Gmail address that sends notification emails (optional) | none |
+| `EMAIL_PASS` | Gmail app password for that address (optional) | none |
 
 ## API reference
 
@@ -187,7 +190,6 @@ It registers an employer and three candidates, uploads their resumes, posts a jo
 
 ## Roadmap
 
-- Email delivery of notifications
 - A web front end for candidates and employers
 - Authentication tokens for the API
 - Pre-computed embeddings stored per resume and job to speed up matching at scale

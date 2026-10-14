@@ -1,5 +1,13 @@
+param([string]$Email = "")
 $api = "http://localhost:3000/api"
 $stamp = Get-Date -Format "HHmmss"
+function Address($label) {
+    if ($Email) {
+        $name, $domain = $Email.Split("@")
+        return "$name+$label$stamp@$domain"
+    }
+    return "$label$stamp@demo.test"
+}
 
 function Send($path, $body) {
     Invoke-RestMethod -Method Post -Uri "$api/$path" -ContentType "application/json" -Body ($body | ConvertTo-Json)
@@ -14,10 +22,10 @@ Step "1. Health check"
 Invoke-RestMethod "$api/health" | Format-Table
 
 Step "2. Register an employer and three candidates"
-$employer = Send "users/register" @{ name = "Acme Tech"; email = "hr$stamp@acmetech.test"; password = "demo1234"; role = "employer" }
-$javaDev = Send "users/register" @{ name = "Amina Otieno"; email = "amina$stamp@demo.test"; password = "demo1234"; role = "candidate" }
-$fullStack = Send "users/register" @{ name = "Brian Mwangi"; email = "brian$stamp@demo.test"; password = "demo1234"; role = "candidate" }
-$marketer = Send "users/register" @{ name = "Carol Njeri"; email = "carol$stamp@demo.test"; password = "demo1234"; role = "candidate" }
+$employer = Send "users/register" @{ name = "Acme Tech"; email = (Address "hr"); password = "demo1234"; role = "employer" }
+$javaDev = Send "users/register" @{ name = "Amina Otieno"; email = (Address "amina"); password = "demo1234"; role = "candidate" }
+$fullStack = Send "users/register" @{ name = "Brian Mwangi"; email = (Address "brian"); password = "demo1234"; role = "candidate" }
+$marketer = Send "users/register" @{ name = "Carol Njeri"; email = (Address "carol"); password = "demo1234"; role = "candidate" }
 @($employer, $javaDev, $fullStack, $marketer) | Format-Table user_id, name, role
 
 Step "3. Candidates upload resumes"

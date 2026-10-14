@@ -1,5 +1,6 @@
 const db = require('../db');
 const { jobText, resumeText, rank } = require('./matcher');
+const { sendEmail } = require('./mailer');
 
 const THRESHOLD = parseFloat(process.env.MATCH_THRESHOLD) || 60;
 
@@ -54,16 +55,35 @@ async function notifyMatches(job) {
 
   const top = strongMatches[0];
   const noun = strongMatches.length === 1 ? 'candidate' : 'candidates';
+  const employerMessage = `${strongMatches.length} strong ${noun} for your ${job.job_title} role (top match: ${top.percent}%)`;
+
   await db.query(
     'INSERT INTO notifications (user_id, job_id, resume_id, match_score, message) VALUES (?, ?, ?, ?, ?)',
-    [
-      job.employer_id,
-      job.job_id,
-      top.resume.resume_id,
-      top.percent,
-      `${strongMatches.length} strong ${noun} for your ${job.job_title} role (top match: ${top.percent}%)`
-    ]
+    [job.employer_id, job.job_id, top.resume.resume_id, top.percent, employerMessage]
   );
+
+  const userIds = [job.employer_id, ...strongMatches.map(({ resume }) => resume.user_id)];
+  const [users] = await db.query(
+    'SELECT user_id, email FROM users WHERE user_id IN (?)',
+    [userIds]
+  );
+  const emailsById = new Map(users.map((user) => [user.user_id, user.email]));
+
+  const emails = strongMatches.map(({ resume, percent }) =>
+    sendEmail(
+      emailsById.get(resume.user_id),
+      `New job match: ${job.job_title}`,
+      `A new job matches your resume.\n\n${job.job_title}${company}\nMatch: ${percent}%\n\nLog in to KaziForce-AI to see the details.`
+    )
+  );
+  emails.push(
+    sendEmail(
+      emailsById.get(job.employer_id),
+      `Top candidates for ${job.job_title}`,
+      `${employerMessage}\n\nLog in to KaziForce-AI to review them.`
+    )
+  );
+  Promise.all(emails);
 
   return { candidates: strongMatches.length, employer: 1 };
 }

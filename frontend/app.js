@@ -1,5 +1,5 @@
 // KaziForce-AI front end. 
-const API = 'http://localhost:3000/api';
+const API = window.location.protocol.startsWith('http') ? '/api' : 'http://localhost:3000/api';
 const STRONG_MATCH = 60; // same default as MATCH_THRESHOLD in the backend
 
 const app = document.getElementById('app');

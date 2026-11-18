@@ -58,7 +58,11 @@ router.get('/job/:jobId', async (req, res) => {
     const [resumes] = await db.query('SELECT * FROM resumes');
     const matches = await rank(
       jobText(jobs[0]),
-      resumes.map((resume) => ({ id: resume.resume_id, text: resumeText(resume) })),
+      resumes.map((resume) => ({
+        id: resume.resume_id,
+        text: resumeText(resume),
+        embedding: resume.embedding
+      })),
       parseTop(req.query.top)
     );
     const resumesById = new Map(resumes.map((resume) => [resume.resume_id, resume]));

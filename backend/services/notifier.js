@@ -16,7 +16,11 @@ async function notifyMatches(job) {
 
   const matches = await rank(
     jobText(job),
-    resumes.map((resume) => ({ id: resume.resume_id, text: resumeText(resume) })),
+    resumes.map((resume) => ({
+      id: resume.resume_id,
+      text: resumeText(resume),
+      embedding: resume.embedding
+    })),
     resumes.length
   );
 

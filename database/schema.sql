@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS resumes (
     experience_years INT,
     education        VARCHAR(150),
     resume_text      MEDIUMTEXT NOT NULL,
+    embedding        JSON NULL,
     created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );

@@ -33,16 +33,26 @@ function esc(value) {
 
 async function api(path, options = {}) {
   let response;
+  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  if (state.user && state.user.token) {
+    headers['Authorization'] = `Bearer ${state.user.token}`;
+  }
   try {
     response = await fetch(`${API}${path}`, {
-      headers: { 'Content-Type': 'application/json' },
       ...options,
+      headers,
       body: options.body ? JSON.stringify(options.body) : undefined
     });
   } catch {
     throw new Error('Cannot reach the API. Check that the backend is running on port 3000.');
   }
   const data = await response.json().catch(() => ({}));
+  if (response.status === 401 && state.user) {
+    saveUser(null);
+    state.unread = 0;
+    renderAuth('Your session has expired. Please sign in again.');
+    throw new Error('Session expired');
+  }
   if (!response.ok) throw new Error(data.error || 'Something went wrong. Try again.');
   return data;
 }

@@ -1,16 +1,18 @@
 const express = require('express');
 const db = require('../db');
 const { notifyMatches } = require('../services/notifier');
+const { verifyToken } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+router.post('/', verifyToken, async (req, res) => {
+  const employer_id = req.user.user_id;
   const {
-    employer_id, job_title, job_description, company_name,
+    job_title, job_description, company_name,
     location, experience_level, work_type, skills
   } = req.body;
-  if (!employer_id || !job_title || !job_description) {
-    return res.status(400).json({ error: 'employer_id, job_title and job_description are required' });
+  if (!job_title || !job_description) {
+    return res.status(400).json({ error: 'job_title and job_description are required' });
   }
   try {
     const [users] = await db.query(
@@ -29,7 +31,7 @@ router.post('/', async (req, res) => {
         experience_level || null, work_type || null, skills || null, job_description
       ]
     );
-            const job = { job_id: result.insertId, employer_id, job_title, company_name, skills, job_description };
+    const job = { job_id: result.insertId, employer_id, job_title, company_name, skills, job_description };
     let notified = { candidates: 0, employer: 0 };
     try {
       notified = await notifyMatches(job);

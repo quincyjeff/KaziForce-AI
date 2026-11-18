@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const db = require('../db');
+const { generateToken, verifyToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -15,7 +16,9 @@ router.post('/register', async (req, res) => {
       'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
       [name, email, passwordHash, role]
     );
-    res.status(201).json({ user_id: result.insertId, name, email, role });
+    const user = { user_id: result.insertId, name, email, role };
+    const token = generateToken(user);
+    res.status(201).json({ token, user_id: user.user_id, name, email, role });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ error: 'Email already registered' });
@@ -39,7 +42,23 @@ router.post('/login', async (req, res) => {
     if (!valid) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
-    res.json({ user_id: user.user_id, name: user.name, email: user.email, role: user.role });
+    const token = generateToken(user);
+    res.json({ token, user_id: user.user_id, name: user.name, email: user.email, role: user.role });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/me', verifyToken, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      'SELECT user_id, name, email, role, created_at FROM users WHERE user_id = ?',
+      [req.user.user_id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }

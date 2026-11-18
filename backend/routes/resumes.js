@@ -1,12 +1,14 @@
 const express = require('express');
 const db = require('../db');
+const { verifyToken } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
-  const { user_id, resume_text, job_role, skills, experience_years, education } = req.body;
-  if (!user_id || !resume_text) {
-    return res.status(400).json({ error: 'user_id and resume_text are required' });
+router.post('/', verifyToken, async (req, res) => {
+  const user_id = req.user.user_id;
+  const { resume_text, job_role, skills, experience_years, education } = req.body;
+  if (!resume_text) {
+    return res.status(400).json({ error: 'resume_text is required' });
   }
   try {
     const [users] = await db.query('SELECT role FROM users WHERE user_id = ?', [user_id]);
@@ -24,11 +26,15 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.get('/user/:userId', async (req, res) => {
+router.get('/user/:userId', verifyToken, async (req, res) => {
   try {
+    const targetUserId = Number(req.params.userId);
+    if (req.user.user_id !== targetUserId && req.user.role !== 'employer') {
+      return res.status(403).json({ error: 'Forbidden: you cannot view another user resumes' });
+    }
     const [rows] = await db.query(
       'SELECT * FROM resumes WHERE user_id = ? ORDER BY created_at DESC',
-      [req.params.userId]
+      [targetUserId]
     );
     res.json(rows);
   } catch (err) {
